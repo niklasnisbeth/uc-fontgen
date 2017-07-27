@@ -58,30 +58,30 @@ render_character(FT_Library library, FT_Face face, FT_Bitmap *bm, unsigned int c
 
 	memset(line, 0, sizeof(line));
 
-  if (debugging) {
-    fprintf(stderr, "+--------+\n");
-    for (y = 0, mask = 1; y < 8; y++, mask <<= 1) {
-      fprintf(stderr, "|");
-      for (x = 0; x < 8; x++) {
-        unsigned int i = x - slot->bitmap_left;
-        unsigned int j = y - (7 - slot->bitmap_top);
-        char v;
+	if (debugging) {
+		fprintf(stderr, "+--------+\n");
+		for (y = 0, mask = 1; y < 8; y++, mask <<= 1) {
+			fprintf(stderr, "|");
+			for (x = 0; x < 8; x++) {
+				unsigned int i = x - slot->bitmap_left;
+				unsigned int j = y - (7 - slot->bitmap_top);
+				char v;
 
-        if (i < bm->width && j < bm->rows)
-          v = bm->buffer[j*bm->pitch + i];
-        else
-          v = 0;
+				if (i < bm->width && j < bm->rows)
+					v = bm->buffer[j*bm->pitch + i];
+				else
+					v = 0;
 
-        if (v) {
-          line[x] |= mask;
-          fprintf(stderr, "#");
-        } else
-          fprintf(stderr, " ");
-      }
-      fprintf(stderr, "|\n");
-    }
-    fprintf(stderr, "+--------+\n");
-  }
+				if (v) {
+					line[x] |= mask;
+					fprintf(stderr, "#");
+				} else
+					fprintf(stderr, " ");
+			}
+			fprintf(stderr, "|\n");
+		}
+		fprintf(stderr, "+--------+\n");
+	}
 
 	printf("\t{ 0x%02hhx, 0x%02hhx, 0x%02hhx, 0x%02hhx,"
 	          " 0x%02hhx, 0x%02hhx, 0x%02hhx, 0x%02hhx }, /* U+%04x",
@@ -116,17 +116,17 @@ main(int argc, char *argv[])
 		fprintf(stderr, usage, argv[0]);
 		return EXIT_FAILURE;
 	}
-  if (argc == 3) {
-    if (strncmp(argv[1], "-d", 2) == 0) {
-      filename = argv[2]; 
-      debugging = true;
-    } else {
-      fprintf(stderr, usage, argv[0]);
-      return EXIT_FAILURE;
-    }
-  } else {
-    filename = argv[1];
-  }
+	if (argc == 3) {
+		if (strncmp(argv[1], "-d", 2) == 0) {
+			filename = argv[2]; 
+			debugging = true;
+		} else {
+			fprintf(stderr, usage, argv[0]);
+			return EXIT_FAILURE;
+		}
+	} else {
+		filename = argv[1];
+	}
 
 	err = FT_Init_FreeType(&library);
 	if (err) {
