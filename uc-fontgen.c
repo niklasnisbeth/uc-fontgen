@@ -19,17 +19,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <freetype/ftbitmap.h>
 
-#ifdef NDEBUG
-#define debug(...) do {} while(0)
-#else
-#define debug(...) printf(__VA_ARGS__)
-#endif
-
 #define CHAR_FIRST 32
 #define CHAR_LAST  126
+
+bool debugging = false;
 
 static FT_Error
 render_character(FT_Library library, FT_Face face, FT_Bitmap *bm, unsigned int ch)
@@ -61,28 +58,30 @@ render_character(FT_Library library, FT_Face face, FT_Bitmap *bm, unsigned int c
 
 	memset(line, 0, sizeof(line));
 
-	debug("+--------+\n");
-	for (y = 0, mask = 1; y < 8; y++, mask <<= 1) {
-		debug("|");
-		for (x = 0; x < 8; x++) {
-			unsigned int i = x - slot->bitmap_left;
-			unsigned int j = y - (7 - slot->bitmap_top);
-			char v;
+  if (debugging) {
+    fprintf(stderr, "+--------+\n");
+    for (y = 0, mask = 1; y < 8; y++, mask <<= 1) {
+      fprintf(stderr, "|");
+      for (x = 0; x < 8; x++) {
+        unsigned int i = x - slot->bitmap_left;
+        unsigned int j = y - (7 - slot->bitmap_top);
+        char v;
 
-			if (i < bm->width && j < bm->rows)
-				v = bm->buffer[j*bm->pitch + i];
-			else
-				v = 0;
+        if (i < bm->width && j < bm->rows)
+          v = bm->buffer[j*bm->pitch + i];
+        else
+          v = 0;
 
-			if (v) {
-				line[x] |= mask;
-				debug("#");
-			} else
-				debug(" ");
-		}
-		debug("|\n");
-	}
-	debug("+--------+\n");
+        if (v) {
+          line[x] |= mask;
+          fprintf(stderr, "#");
+        } else
+          fprintf(stderr, " ");
+      }
+      fprintf(stderr, "|\n");
+    }
+    fprintf(stderr, "+--------+\n");
+  }
 
 	printf("\t{ 0x%02hhx, 0x%02hhx, 0x%02hhx, 0x%02hhx,"
 	          " 0x%02hhx, 0x%02hhx, 0x%02hhx, 0x%02hhx }, /* U+%04x",
@@ -111,11 +110,23 @@ main(int argc, char *argv[])
 	char *filename;
 	unsigned int ch;
 
+  const char usage[] = "usage: %s [-d] <font file>\n";
+
 	if (argc < 2) {
-		fprintf(stderr, "usage: %s <font file>\n", argv[0]);
+		fprintf(stderr, usage, argv[0]);
 		return EXIT_FAILURE;
 	}
-	filename = argv[1];
+  if (argc == 3) {
+    if (strncmp(argv[1], "-d", 2) == 0) {
+      filename = argv[2]; 
+      debugging = true;
+    } else {
+      fprintf(stderr, usage, argv[0]);
+      return EXIT_FAILURE;
+    }
+  } else {
+    filename = argv[1];
+  }
 
 	err = FT_Init_FreeType(&library);
 	if (err) {
@@ -125,7 +136,7 @@ main(int argc, char *argv[])
 
 	err = FT_New_Face(library, filename, 0, &face);
 	if (err) {
-		fprintf(stderr, "error: FT_New_Face failed %d\n", err);
+		fprintf(stderr, "error: FT_New_Face failed %d for %s\n", err, filename);
 		return EXIT_FAILURE;
 	}
 
